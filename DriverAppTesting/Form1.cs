@@ -1,22 +1,37 @@
 ﻿
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Data.Common;
+using System.Security.Policy;
 
 namespace DriverAppTesting
 {
     public partial class Form1 : Form
     {
         private HubConnection _connection;
-        private int _driverId = 2;
+        private int _driverId = 1;
         private System.Timers.Timer _locationTimer;
-        private int _currentBookingId;
+        private int _currentBookingId = 3;
         private int _userId;
 
+        private string _number = "8344273152";
+        private string _otp = "1234";
+
+
+        private string localurl = "https://localhost:7091/hubs/location";
+        private string azureurl = "https://zhoodrivetracker-erg5hca6dcdtfzcn.canadacentral-01.azurewebsites.net/hubs/location";
+        private string CurrentHubURL;
+
+        private ApiClient api;
         public Form1()
         {
             InitializeComponent();
+            CurrentHubURL = azureurl;
 
+            // Choose environment
+            string baseMAINUrl = "https://localhost:7029/";
+            string AzureMainURL = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
 
+            api = new ApiClient(AzureMainURL);
         }
 
         private void AppendLog(string text)
@@ -48,26 +63,51 @@ namespace DriverAppTesting
 
         private async void StartPickup_Click(object sender, EventArgs e)
         {
+            await UpdateBoking(new UpdateBookingRequest
+            {
+                RideRequestId = _currentBookingId,
+                RideStatus = (int)RideStatus.StartedToPickup
+            });
+
             await _connection.InvokeAsync("StartPickupNotification", _currentBookingId);
             AppendLog("📍 Started pickup");
         }
 
         private async void ReachedPickup_Click(object sender, EventArgs e)
         {
+            await UpdateBoking(new UpdateBookingRequest
+            {
+                RideRequestId = _currentBookingId,
+                RideStatus = (int)RideStatus.Reached
+            });
             await _connection.InvokeAsync("PickupReachedNotification", _currentBookingId);
             AppendLog("📍 Reached pickup");
         }
 
         private async void StartTrip_Click(object sender, EventArgs e)
         {
-            var otp = "1234";  // add a textbox for driver to enter OTP
+            var otp = OTPTextBox.Text;  // add a textbox for driver to enter OTP
+
+            await UpdateBoking(new UpdateBookingRequest
+            {
+                RideRequestId = _currentBookingId,
+                RideStatus = (int)RideStatus.Started,
+                Otp = otp
+            });
             await _connection.InvokeAsync("StartRide", _currentBookingId, otp);
             AppendLog($"🚖 Trip start attempted with OTP {otp}");
         }
 
         private async void EndTrip_Click(object sender, EventArgs e)
         {
-            var otp = "1234";  // reuse textbox for End OTP
+            var otp = OTPTextBox.Text;  // reuse textbox for End OTP
+
+            await UpdateBoking(new UpdateBookingRequest
+            {
+                RideRequestId = _currentBookingId,
+                RideStatus = (int)RideStatus.Completed,
+                Otp = otp
+            });
             await _connection.InvokeAsync("EndRide", _currentBookingId, otp);
             AppendLog($"🏁 Trip end attempted with OTP {otp}");
         }
@@ -78,7 +118,14 @@ namespace DriverAppTesting
             _locationTimer.Elapsed += async (_, __) =>
             {
                 var loc = new DriverLocation { DriverId = _driverId, Latitude = 11.0797, Longitude = 76.9997 };
-                await _connection.InvokeAsync("UpdateDriverLocation", loc);
+                if(_connection.State == HubConnectionState.Connected)
+                {
+                    await _connection.InvokeAsync("UpdateDriverLocation", loc);
+                }
+                else
+                {
+                    await _connection.StartAsync();
+                }
             };
             _locationTimer.Start();
             AppendLog("📡 Location updates started");
@@ -92,20 +139,26 @@ namespace DriverAppTesting
 
         private void Initialize_Click(object sender, EventArgs e)
         {
-            var LocalhubUrl = "https://localhost:7091/hubs/location";
+            var LocalhubUrl = $"{CurrentHubURL}";
             var hubUrl = $"{LocalhubUrl}?userId={_driverId}&role=driver"; // ✅ driver role
 
             _connection = new HubConnectionBuilder()
-                .WithUrl(hubUrl)
+                .WithUrl(hubUrl, options =>
+                {
+                    options.AccessTokenProvider = async () =>
+                    {
+                        return ApiClient._token;
+                    };
+                })
                 .WithAutomaticReconnect()
                 .Build();
 
             // listeners
             _connection.On<BookingRequestModel>("ReceiveBookingRequest", booking =>
             {
-                _currentBookingId = booking.BoookingRequestId;
+                _currentBookingId = booking.BookingRequestId;
                 _userId = booking.UserId;
-                AppendLog($"📩 Booking received {booking.BoookingRequestId} from user {_userId}");
+                AppendLog($"📩 Booking received {booking.BookingRequestId} from user {_userId}");
             });
 
             _connection.On<int>("BookingConfirmed", id => AppendLog($" Booking confirmed {id}"));
@@ -117,6 +170,9 @@ namespace DriverAppTesting
 
             _connection.On<int>("TripCancelled", id => AppendLog($" Trip Cancelled {id}"));
 
+            _connection.On<object>("OtpVerificationFailed",
+                id => AppendLog($" Otp verification failed {id}"));
+
             _connection.On<RideMessage>("ReceiveRideMessage", msg =>
             {
                 AppendLog($"Message from driver: {msg.Message}");
@@ -127,6 +183,7 @@ namespace DriverAppTesting
 
         private async void CancelRide_Click(object sender, EventArgs e)
         {
+            await api.CancelRideAsync(_currentBookingId);
             await _connection.InvokeAsync("CancelTripNotification", _currentBookingId);
         }
 
@@ -135,6 +192,34 @@ namespace DriverAppTesting
             var txt = messagebox.Text;
             var rideId = _currentBookingId;
             await _connection.InvokeAsync("SendRideMessage", rideId, txt, "driver", _driverId);
+        }
+
+        private async void GetToken_Click(object sender, EventArgs e)
+        {
+            var token = await api.VerifyOtpAsync(new VerifyOtpRequest
+            {
+                Code = "1234",
+                DeviceKey = "device123",
+                IpAddress = "192.168.0.1",
+                PhoneNumber = "+911234567890"
+            });
+        }
+
+
+        private async Task UpdateBoking(UpdateBookingRequest req)
+        {
+            await api.UpdateRideStatusAsync(req);
+        }
+
+        private async void GetToken_Click_1(object sender, EventArgs e)
+        {
+            var token = await api.VerifyOtpAsync(new VerifyOtpRequest
+            {
+                Code = "1234",
+                DeviceKey = "device123",
+                IpAddress = "192.168.0.1",
+                PhoneNumber = "8344273152"
+            });
         }
     }
 }

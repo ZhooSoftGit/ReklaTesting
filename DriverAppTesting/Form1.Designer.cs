@@ -42,6 +42,8 @@
             CancelRide = new Button();
             button3 = new Button();
             messagebox = new TextBox();
+            OTPTextBox = new TextBox();
+            GetToken = new Button();
             SuspendLayout();
             // 
             // Online
@@ -86,7 +88,7 @@
             // 
             // StartTrip
             // 
-            StartTrip.Location = new Point(271, 90);
+            StartTrip.Location = new Point(569, 125);
             StartTrip.Name = "StartTrip";
             StartTrip.Size = new Size(94, 29);
             StartTrip.TabIndex = 4;
@@ -164,7 +166,7 @@
             // 
             // button3
             // 
-            button3.Location = new Point(550, 165);
+            button3.Location = new Point(544, 259);
             button3.Name = "button3";
             button3.Size = new Size(152, 30);
             button3.TabIndex = 11;
@@ -174,16 +176,35 @@
             // 
             // messagebox
             // 
-            messagebox.Location = new Point(558, 79);
+            messagebox.Location = new Point(544, 211);
             messagebox.Name = "messagebox";
             messagebox.Size = new Size(125, 27);
             messagebox.TabIndex = 12;
+            // 
+            // OTPTextBox
+            // 
+            OTPTextBox.Location = new Point(551, 65);
+            OTPTextBox.Name = "OTPTextBox";
+            OTPTextBox.Size = new Size(125, 27);
+            OTPTextBox.TabIndex = 13;
+            // 
+            // GetToken
+            // 
+            GetToken.Location = new Point(485, 15);
+            GetToken.Name = "GetToken";
+            GetToken.Size = new Size(94, 29);
+            GetToken.TabIndex = 14;
+            GetToken.Text = "GetToken";
+            GetToken.UseVisualStyleBackColor = true;
+            GetToken.Click += GetToken_Click_1;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(GetToken);
+            Controls.Add(OTPTextBox);
             Controls.Add(messagebox);
             Controls.Add(button3);
             Controls.Add(CancelRide);
@@ -220,5 +241,7 @@
         private Button CancelRide;
         private Button button3;
         private TextBox messagebox;
+        private TextBox OTPTextBox;
+        private Button GetToken;
     }
 }

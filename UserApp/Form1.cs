@@ -8,13 +8,15 @@ namespace UserApp
         private HubConnection _connection;
 
         private int _userId = 1;
-        private int _requestId = 10;
-
+        private int _requestId = 16;
+        private string localurl = "https://localhost:7091/hubs/location";
+        private string azureurl = "https://zhoodrivetracker-erg5hca6dcdtfzcn.canadacentral-01.azurewebsites.net/hubs/location";
+        private string CurrentHubURL;
         public Form1()
         {
             InitializeComponent();
 
-
+            CurrentHubURL = azureurl;
 
         }
 
@@ -32,7 +34,7 @@ namespace UserApp
 
         private async void Initialize_Click(object sender, EventArgs e)
         {
-            var LocalhubUrl = "https://localhost:7091/hubs/location";
+            var LocalhubUrl = $"{CurrentHubURL}";
             var hubUrl = $"{LocalhubUrl}?userId={_userId}&role=user";
 
             _connection = new HubConnectionBuilder()

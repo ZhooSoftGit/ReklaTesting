@@ -154,11 +154,11 @@ namespace DriverAppTesting
                 .Build();
 
             // listeners
-            _connection.On<BookingRequestModel>("ReceiveBookingRequest", booking =>
+            _connection.On<RideRequestDto>("ReceiveBookingRequest", booking =>
             {
-                _currentBookingId = booking.BookingRequestId;
+                _currentBookingId = booking.RideRequestId;
                 _userId = booking.UserId;
-                AppendLog($"📩 Booking received {booking.BookingRequestId} from user {_userId}");
+                AppendLog($"📩 Booking received {booking.RideRequestId} from user {_userId}. Fare {booking.EstimatedFare}");
             });
 
             _connection.On<int>("BookingConfirmed", id => AppendLog($" Booking confirmed {id}"));

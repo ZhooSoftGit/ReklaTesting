@@ -7,8 +7,8 @@ namespace UserApp
     {
         private HubConnection _connection;
 
-        private int _userId = 1;
-        private int _requestId = 16;
+        private int _userId = 3;
+        private int _requestId = 1;
         private string localurl = "https://localhost:7091/hubs/location";
         private string azureurl = "https://zhoodrivetracker-erg5hca6dcdtfzcn.canadacentral-01.azurewebsites.net/hubs/location";
         private string CurrentHubURL;
@@ -16,7 +16,7 @@ namespace UserApp
         {
             InitializeComponent();
 
-            CurrentHubURL = azureurl;
+            CurrentHubURL = localurl;
 
         }
 
@@ -81,23 +81,19 @@ namespace UserApp
 
         private async void BookingConfirmed_Click(object sender, EventArgs e)
         {
-            var booking = new BookingRequestModel
+            var booking = new RideRequestDto
             {
-                BookingType = RideTypeEnum.Local,
-                Fare = "250",
-                DistanceAndPayment = "12 km | Cash",
+                RideType = RideTypeEnum.Local,
+                EstimatedFare = 250,
+                EstimatedDistance = 12,
                 PickupLocation = "Kempegowda International Airport",
                 PickupLatitude = 11.0894,
                 PickupLongitude = 77.0147,
-                PickupAddress = "Airport Rd, Bengaluru, Karnataka",
-                PickupTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                PickupDateTime = DateTime.Now,
                 DropoffLocation = "MG Road Metro Station",
-                DropLatitude = 10.9902,
-                DropLongitude = 76.9629,
-                RemainingBids = 5,
-                BoookingRequestId = _requestId,
-                UserName = "Rajesh",
-                DriverId = null,   // not assigned yet
+                DropoffLatitude = 10.9902,
+                DropoffLongitude = 76.9629,
+                RideRequestId = _requestId,
                 UserId = _userId   // int ✅
             };
 

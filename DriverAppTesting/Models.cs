@@ -17,13 +17,13 @@
 
         public int RideRequestId { get; set; }
 
-        public DateTime? DropDateTime { get; set; }
+        public DateTime? DropoffDateTime { get; set; }
 
-        public double DropOffLatitude { get; set; }
+        public double DropoffLatitude { get; set; }
 
-        public string DropOffLocation { get; set; } = null!;
+        public string DropoffLocation { get; set; } = null!;
 
-        public double DropOffLongitude { get; set; }
+        public double DropoffLongitude { get; set; }
 
         public double? EstimatedDistance { get; set; }
 
@@ -33,11 +33,11 @@
 
         public DateTime PickupDateTime { get; set; }
 
-        public double PickUpLatitude { get; set; }
+        public double PickupLatitude { get; set; }
 
-        public string PickUpLocation { get; set; } = null!;
+        public string PickupLocation { get; set; } = null!;
 
-        public double PickUpLongitude { get; set; }
+        public double PickupLongitude { get; set; }
 
         public int? RentalHours { get; set; }
 

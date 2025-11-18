@@ -26,7 +26,7 @@ namespace DriverAppTesting
         }
 
         // 🔹 Common POST
-        private async Task<T> PostAsync<T>(string endpoint, object data, bool authRequired = true)
+        private async Task<T?> PostAsync<T>(string endpoint, object data, bool authRequired = true) where T : class 
         {
             if (authRequired && !string.IsNullOrEmpty(_token))
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
@@ -38,6 +38,8 @@ namespace DriverAppTesting
 
             var json = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<T>(json, _jsonOptions);
+
+            return null;
         }
 
         // 🔹 Common GET

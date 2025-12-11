@@ -1,5 +1,7 @@
 ﻿
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 using System.Data.Common;
 using System.Security.Policy;
 
@@ -25,13 +27,13 @@ namespace DriverAppTesting
         public Form1()
         {
             InitializeComponent();
-            CurrentHubURL = azureurl;
+            CurrentHubURL = localurl;
 
             // Choose environment
             string baseMAINUrl = "https://localhost:7029/";
-            string AzureMainURL = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
+            //string AzureMainURL = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
 
-            api = new ApiClient(AzureMainURL);
+            api = new ApiClient(baseMAINUrl);
         }
 
         private void AppendLog(string text)
@@ -44,20 +46,34 @@ namespace DriverAppTesting
 
         private async void Online_Click(object sender, EventArgs e)
         {
-            txtLog.Clear();
-            await _connection.StartAsync();
-            AppendLog("✅ Connected as Driver");
+            try
+            {
+                txtLog.Clear();
+                await _connection.StartAsync();
+                AppendLog("✅ Connected as Driver");
+            }
+            catch (Exception ex)
+            {
+            }
         }
 
         private async void acceptrekla_Click(object sender, EventArgs e)
         {
             AppendLog(" Accepted booking");
-            await _connection.InvokeAsync("RespondToBookingByDriver", _userId, _driverId, _currentBookingId, "assigned");
+            var resp = await api.CreateRideAsync(new AcceptRideRequest
+            {
+                RideRequestId = _currentBookingId,
+                DriverId = _driverId
+            });
+            //await _connection.InvokeAsync("RespondToBookingByDriver", _userId, _driverId, _currentBookingId, "assigned");
         }
+
+
 
         private async void cancelRekla_Click(object sender, EventArgs e)
         {
-            await _connection.InvokeAsync("RespondToBookingByDriver", _userId, _driverId, _currentBookingId, "rejected");
+            // await _connection.InvokeAsync("RespondToBookingByDriver", _userId, _driverId, _currentBookingId, "rejected");
+            await api.CancelRideAsync(_currentBookingId);
             AppendLog("❌ Rejected booking");
         }
 
@@ -69,7 +85,7 @@ namespace DriverAppTesting
                 RideStatus = (int)RideStatus.StartedToPickup
             });
 
-            await _connection.InvokeAsync("StartPickupNotification", _currentBookingId);
+            //await _connection.InvokeAsync("StartPickupNotification", _currentBookingId);
             AppendLog("📍 Started pickup");
         }
 
@@ -80,7 +96,7 @@ namespace DriverAppTesting
                 RideRequestId = _currentBookingId,
                 RideStatus = (int)RideStatus.Reached
             });
-            await _connection.InvokeAsync("PickupReachedNotification", _currentBookingId);
+            //await _connection.InvokeAsync("PickupReachedNotification", _currentBookingId);
             AppendLog("📍 Reached pickup");
         }
 
@@ -94,7 +110,7 @@ namespace DriverAppTesting
                 RideStatus = (int)RideStatus.Started,
                 Otp = otp
             });
-            await _connection.InvokeAsync("StartRide", _currentBookingId, otp);
+            //await _connection.InvokeAsync("StartRide", _currentBookingId, otp);
             AppendLog($"🚖 Trip start attempted with OTP {otp}");
         }
 
@@ -108,7 +124,7 @@ namespace DriverAppTesting
                 RideStatus = (int)RideStatus.Completed,
                 Otp = otp
             });
-            await _connection.InvokeAsync("EndRide", _currentBookingId, otp);
+            //await _connection.InvokeAsync("EndRide", _currentBookingId, otp);
             AppendLog($"🏁 Trip end attempted with OTP {otp}");
         }
 
@@ -118,7 +134,7 @@ namespace DriverAppTesting
             _locationTimer.Elapsed += async (_, __) =>
             {
                 var loc = new DriverLocation { DriverId = _driverId, Latitude = 11.0797, Longitude = 76.9997 };
-                if(_connection.State == HubConnectionState.Connected)
+                if (_connection.State == HubConnectionState.Connected)
                 {
                     await _connection.InvokeAsync("UpdateDriverLocation", loc);
                 }
@@ -137,21 +153,39 @@ namespace DriverAppTesting
             AppendLog("📡 Location updates stopped");
         }
 
-        private void Initialize_Click(object sender, EventArgs e)
+        private async void Initialize_Click(object sender, EventArgs e)
         {
             var LocalhubUrl = $"{CurrentHubURL}";
             var hubUrl = $"{LocalhubUrl}?userId={_driverId}&role=driver"; // ✅ driver role
 
             _connection = new HubConnectionBuilder()
-                .WithUrl(hubUrl, options =>
+                            .WithUrl(hubUrl, options =>
+                            {
+                                options.AccessTokenProvider = () => Task.FromResult(ApiClient._token);
+                                options.Transports = HttpTransportType.LongPolling;
+                            })
+                             .ConfigureLogging(logging =>
+                             {
+                                 logging.SetMinimumLevel(LogLevel.Trace);
+                             })
+                            .Build();
+
+            try
+            {
+                await _connection.StartAsync();
+
+                _connection.Closed += async (error) =>
                 {
-                    options.AccessTokenProvider = async () =>
-                    {
-                        return ApiClient._token;
-                    };
-                })
-                .WithAutomaticReconnect()
-                .Build();
+                    AppendLog(" Connection closed. Reconnecting...");
+                    await Task.Delay(new Random().Next(0, 5) * 1000);
+                    await _connection.StartAsync();
+                };
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"Connection error: {ex.Message}");
+            }
+
 
             // listeners
             _connection.On<RideRequestDto>("ReceiveBookingRequest", booking =>
@@ -162,16 +196,9 @@ namespace DriverAppTesting
             });
 
             _connection.On<int>("BookingConfirmed", id => AppendLog($" Booking confirmed {id}"));
-            _connection.On<int>("BookingExpired", id => AppendLog($" Booking expired {id}"));
-            _connection.On<int>("BookingCancelled", id => AppendLog($" Booking cancelled {id}"));
 
-            _connection.On<int>("TripStarted", id => AppendLog($"Trip started {id}"));
-            _connection.On<int>("TripCompleted", id => AppendLog($" Trip completed {id}"));
+            _connection.On<RideEventModel>("OnTripNotification", data => AppendLog($"{data.RideRequestId}:{data.Status}"));
 
-            _connection.On<int>("TripCancelled", id => AppendLog($" Trip Cancelled {id}"));
-
-            _connection.On<object>("OtpVerificationFailed",
-                id => AppendLog($" Otp verification failed {id}"));
 
             _connection.On<RideMessage>("ReceiveRideMessage", msg =>
             {
@@ -183,8 +210,9 @@ namespace DriverAppTesting
 
         private async void CancelRide_Click(object sender, EventArgs e)
         {
-            await api.CancelRideAsync(_currentBookingId);
-            await _connection.InvokeAsync("CancelTripNotification", _currentBookingId);
+            var result = await api.CancelRideAsync(_currentBookingId);
+            AppendLog($"Ride has been cancelled. {result.Success}");
+
         }
 
         private async void button3_Click(object sender, EventArgs e)
@@ -201,7 +229,7 @@ namespace DriverAppTesting
                 Code = "1234",
                 DeviceKey = "device123",
                 IpAddress = "192.168.0.1",
-                PhoneNumber = "+911234567890"
+                PhoneNumber = "8344273152"
             });
         }
 
@@ -220,6 +248,8 @@ namespace DriverAppTesting
                 IpAddress = "192.168.0.1",
                 PhoneNumber = "8344273152"
             });
+
+            AppendLog("Token generated");
         }
     }
 }

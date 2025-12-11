@@ -7,7 +7,9 @@ namespace UserApp
     {
         private HubConnection _connection;
 
-        private int _userId = 3;
+        private ApiClient api;
+
+        private int _userId = 14;
         private int _requestId = 1;
         private string localurl = "https://localhost:7091/hubs/location";
         private string azureurl = "https://zhoodrivetracker-erg5hca6dcdtfzcn.canadacentral-01.azurewebsites.net/hubs/location";
@@ -18,6 +20,11 @@ namespace UserApp
 
             CurrentHubURL = localurl;
 
+            // Choose environment
+            string baseMAINUrl = "https://localhost:7029/";
+            //string AzureMainURL = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
+
+            api = new ApiClient(baseMAINUrl);
         }
 
         private void AppendLog(string text)
@@ -42,27 +49,32 @@ namespace UserApp
                 .WithAutomaticReconnect()
                 .Build();
 
+            _connection.Closed += async (error) =>
+            {
+                AppendLog(" Connection closed. Reconnecting...");
+                await Task.Delay(new Random().Next(0, 5) * 1000);
+                await _connection.StartAsync();
+            };
+
             // register listeners
-            _connection.On<int>("NoDriverAvailable", id => AppendLog($" No drivers for booking {id}"));
             _connection.On<object>("BookingConfirmed", data =>
             {
                 AppendLog($"Booking Confirmed: {System.Text.Json.JsonSerializer.Serialize(data)}");
             });
 
-            _connection.On<int>("BookingCancelled", id => AppendLog($" Booking cancelled {id}"));
-
-            _connection.On<object>("ReceiveTripOtps", otps => AppendLog($" OTPs received: {System.Text.Json.JsonSerializer.Serialize(otps)}"));
-
-            _connection.On<int>("StartPickupNotification", id => AppendLog($" Start Pickup Notification {id}"));
-            _connection.On<int>("PickupReachedNotification", id => AppendLog($" Pickup Reached Notification {id}"));
-
-            _connection.On<int>("TripStarted", id => AppendLog($" Trip started {id}"));
-            _connection.On<int>("TripCompleted", id => AppendLog($" Trip completed {id}"));
-            _connection.On<int>("TripCancelled", id => AppendLog($" Trip Cancelled {id}"));
+            _connection.On<RideEventModel>("OnTripNotification", data =>
+            {
+                AppendLog($"{data.RideRequestId}:{data.Status}");
+            });
 
             _connection.On<DriverLocation>("ReceiveDriverLocation", loc =>
             {
                 AppendLog($"📍 Driver location: {loc.Latitude},{loc.Longitude}");
+            });
+
+            _connection.On<int>("NoDriverAvailable", requestid =>
+            {
+                AppendLog($"No drivers available for ride {requestid}");
             });
 
             _connection.On<RideMessage>("ReceiveRideMessage", msg =>
@@ -87,30 +99,32 @@ namespace UserApp
                 EstimatedFare = 250,
                 EstimatedDistance = 12,
                 PickupLocation = "Kempegowda International Airport",
-                PickupLatitude = 11.0894,
-                PickupLongitude = 77.0147,
+                PickupLatitude = 11.079842,
+                PickupLongitude = 77.001138,
                 PickupDateTime = DateTime.Now,
                 DropoffLocation = "MG Road Metro Station",
-                DropoffLatitude = 10.9902,
-                DropoffLongitude = 76.9629,
+                DropoffLatitude = 11.147958,
+                DropoffLongitude = 77.041687,
                 RideRequestId = _requestId,
+                VehicleType = VehicleTypeEnum.SUV,
                 UserId = _userId   // int ✅
             };
 
-            await _connection.InvokeAsync("SendBookingRequest", booking);
+            var result = await api.SendRideRequest(booking);
+            _requestId = result?.RideRequestId ?? 0;
             AppendLog($" Booking request {_requestId} sent.");
         }
 
         private async void cancelbooking_Click(object sender, EventArgs e)
         {
             var rideId = _requestId;
-            await _connection.InvokeAsync("CancelBooking", rideId);
+            await api.CancelRideAsync(rideId);
         }
 
         private async void button1_Click(object sender, EventArgs e)
         {
             var rideId = _requestId;
-            await _connection.InvokeAsync("CancelTripNotification", rideId);
+            await api.CancelRideAsync(rideId);
         }
 
         private async void SendMsg_Click(object sender, EventArgs e)
@@ -118,6 +132,24 @@ namespace UserApp
             var txt = messagebox.Text;
             var rideId = _requestId;
             await _connection.InvokeAsync("SendRideMessage", rideId, txt, "user", _userId);
+        }
+
+        private async void button2_Click(object sender, EventArgs e)
+        {
+            var token = await api.VerifyOtpAsync(new VerifyOtpRequest
+            {
+                Code = "1234",
+                DeviceKey = "device123",
+                IpAddress = "192.168.0.1",
+                PhoneNumber = "8344273150"
+            });
+
+            AppendLog("Token generated");
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

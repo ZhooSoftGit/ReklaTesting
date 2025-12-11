@@ -176,4 +176,50 @@
         #endregion
     }
 
+
+    public class AcceptRideRequest
+    {
+        #region Properties
+
+        public int DriverId { get; set; }
+
+        public int RideRequestId { get; set; }
+
+        public int? VehicleId { get; set; }
+
+        #endregion
+    }
+
+    public class UpdateTripStatusDto
+    {
+        #region Properties
+
+        public bool? ForceStart { get; set; }
+
+        public string? OTP { get; set; }
+
+        public int RideRequestId { get; set; }
+
+        public RideStatus? RideStatus { get; set; }
+
+        #endregion
+    }
+
+    public class RideEventModel
+    {
+        #region Properties
+
+        public int DriverId { get; set; }
+
+        public object? Payload { get; set; }
+
+        public int RideRequestId { get; set; }
+
+        public RideStatus Status { get; set; }
+
+        public int UserId { get; set; }
+
+        #endregion
+    }
+
 }

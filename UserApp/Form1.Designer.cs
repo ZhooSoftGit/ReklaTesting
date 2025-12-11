@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             neardriver = new Button();
-            BookingConfirmed = new Button();
             CancelBooking = new Button();
             txtLog = new RichTextBox();
             connectsignal = new Button();
@@ -37,11 +36,14 @@
             button1 = new Button();
             SendMsg = new Button();
             messagebox = new TextBox();
+            button2 = new Button();
+            button3 = new Button();
+            button4 = new Button();
             SuspendLayout();
             // 
             // neardriver
             // 
-            neardriver.Location = new Point(122, 31);
+            neardriver.Location = new Point(140, 27);
             neardriver.Name = "neardriver";
             neardriver.Size = new Size(94, 29);
             neardriver.TabIndex = 0;
@@ -49,19 +51,9 @@
             neardriver.UseVisualStyleBackColor = true;
             neardriver.Click += neardriver_Click;
             // 
-            // BookingConfirmed
-            // 
-            BookingConfirmed.Location = new Point(122, 139);
-            BookingConfirmed.Name = "BookingConfirmed";
-            BookingConfirmed.Size = new Size(178, 29);
-            BookingConfirmed.TabIndex = 1;
-            BookingConfirmed.Text = "BookingConfirmed";
-            BookingConfirmed.UseVisualStyleBackColor = true;
-            BookingConfirmed.Click += BookingConfirmed_Click;
-            // 
             // CancelBooking
             // 
-            CancelBooking.Location = new Point(129, 183);
+            CancelBooking.Location = new Point(63, 235);
             CancelBooking.Name = "CancelBooking";
             CancelBooking.Size = new Size(171, 29);
             CancelBooking.TabIndex = 2;
@@ -100,7 +92,7 @@
             // 
             // button1
             // 
-            button1.Location = new Point(160, 235);
+            button1.Location = new Point(268, 235);
             button1.Name = "button1";
             button1.Size = new Size(211, 29);
             button1.TabIndex = 6;
@@ -125,11 +117,43 @@
             messagebox.Size = new Size(153, 27);
             messagebox.TabIndex = 8;
             // 
+            // button2
+            // 
+            button2.Location = new Point(473, 27);
+            button2.Name = "button2";
+            button2.Size = new Size(94, 29);
+            button2.TabIndex = 9;
+            button2.Text = "Get token";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click;
+            // 
+            // button3
+            // 
+            button3.Location = new Point(140, 129);
+            button3.Name = "button3";
+            button3.Size = new Size(178, 29);
+            button3.TabIndex = 1;
+            button3.Text = "SendBookingRequest";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += BookingConfirmed_Click;
+            // 
+            // button4
+            // 
+            button4.Location = new Point(90, 191);
+            button4.Name = "button4";
+            button4.Size = new Size(193, 29);
+            button4.TabIndex = 10;
+            button4.Text = "Booking confirmed";
+            button4.UseVisualStyleBackColor = true;
+            button4.Click += button4_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(button4);
+            Controls.Add(button2);
             Controls.Add(messagebox);
             Controls.Add(SendMsg);
             Controls.Add(button1);
@@ -137,7 +161,7 @@
             Controls.Add(connectsignal);
             Controls.Add(txtLog);
             Controls.Add(CancelBooking);
-            Controls.Add(BookingConfirmed);
+            Controls.Add(button3);
             Controls.Add(neardriver);
             Name = "Form1";
             Text = "Form1";
@@ -148,7 +172,6 @@
         #endregion
 
         private Button neardriver;
-        private Button BookingConfirmed;
         private Button CancelBooking;
         private RichTextBox txtLog;
         private Button connectsignal;
@@ -156,5 +179,8 @@
         private Button button1;
         private Button SendMsg;
         private TextBox messagebox;
+        private Button button2;
+        private Button button3;
+        private Button button4;
     }
 }

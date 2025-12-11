@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace DriverAppTesting
+namespace UserApp
 {
-    using System.Net.Http.Headers;
-    using System.Security.Policy;
-    using System.Text;
-    using System.Text.Json;
-
     public class ApiClient
     {
         private readonly HttpClient _httpClient;
@@ -26,7 +23,7 @@ namespace DriverAppTesting
         }
 
         // 🔹 Common POST
-        private async Task<T?> PostAsync<T>(string endpoint, object data, bool authRequired = true) where T : class 
+        private async Task<T?> PostAsync<T>(string endpoint, object data, bool authRequired = true) where T : class
         {
             if (authRequired && !string.IsNullOrEmpty(_token))
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
@@ -70,65 +67,16 @@ namespace DriverAppTesting
             return true;
         }
 
-        // 🔹 Update Booking
-        public async Task<bool> UpdateRideStatusAsync(UpdateBookingRequest request)
-        {
-            try
-            {
-                var response = await PostAsync<ApiResponse<bool>>("api/ride-trips/update-status", request);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-        }
-
-        // 🔹 Cancel Ride
+        // 🔹 Cancel Booking or Ride
         public async Task<RideServiceResponse> CancelRideAsync(int rideRequestId)
         {
             var response = await PostAsync<RideServiceResponse>($"api/taxi/cancel-ride/{rideRequestId}", null);
             return response;
         }
 
-        public async Task<object?> CreateRideAsync(AcceptRideRequest rideRequest)
+        internal async Task<RideRequestDto?> SendRideRequest(RideRequestDto booking)
         {
-            try
-            {
-                var response = await PostAsync<object>("api/taxi/accept-ride", rideRequest);
-                return response;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-        }
-
-        public async Task<object?> UpdateBookingStatus(UpdateTripStatusDto rideRequest)
-        {
-            try
-            {
-                var response = await PostAsync<object>("api/taxi/update-booking", rideRequest);
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                //log error
-                return false;
-            }
-        }
-
-        public async Task<object?> StartRideAsync(int rideId, string otp)
-        {
-            var response = await PostAsync<object>($"api/rides/{rideId}/start", new { otp });
-            return response;
-        }
-
-        public async Task<object?> EndRideAsync(int rideId, string otp)
-        {
-            var response = await PostAsync<object>($"api/rides/{rideId}/end", new { otp });
-            return response;
+            return await PostAsync<RideRequestDto>($"api/taxi/book-ride", booking);
         }
     }
 }

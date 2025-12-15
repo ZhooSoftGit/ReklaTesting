@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using System.Data.Common;
 using System.Security.Policy;
+using System.Threading.Tasks;
 
 namespace DriverAppTesting
 {
@@ -27,13 +28,15 @@ namespace DriverAppTesting
         public Form1()
         {
             InitializeComponent();
+            //CurrentHubURL = azureurl;
+
             CurrentHubURL = localurl;
 
             // Choose environment
-            string baseMAINUrl = "https://localhost:7029/";
+            string AzureMainURL = "https://localhost:7029/";
             //string AzureMainURL = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
 
-            api = new ApiClient(baseMAINUrl);
+            api = new ApiClient(AzureMainURL);
         }
 
         private void AppendLog(string text)
@@ -250,6 +253,21 @@ namespace DriverAppTesting
             });
 
             AppendLog("Token generated");
+        }
+
+        private async void button4_Click(object sender, EventArgs e)
+        {
+            var data = await api.GetRideInfo();
+
+            if(data != null)
+            {
+                AppendLog($"Current Ride Id: {data.RideRequestId}, Status: {data.RideStatus}");
+                _currentBookingId = data.RideRequestId;
+            }
+            else
+            {
+                AppendLog("No ongoing ride found.");
+            }
         }
     }
 }

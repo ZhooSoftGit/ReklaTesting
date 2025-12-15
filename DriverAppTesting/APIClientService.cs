@@ -26,7 +26,7 @@ namespace DriverAppTesting
         }
 
         // 🔹 Common POST
-        private async Task<T?> PostAsync<T>(string endpoint, object data, bool authRequired = true) where T : class 
+        private async Task<T?> PostAsync<T>(string endpoint, object? data, bool authRequired = true) where T : class
         {
             if (authRequired && !string.IsNullOrEmpty(_token))
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
@@ -68,6 +68,16 @@ namespace DriverAppTesting
         {
             var response = await PostAsync<string>("api/DriverStatus/update", statusPayload);
             return true;
+        }
+
+        public async Task<RideTripDto?> GetRideInfo()
+        {
+            var response = await GetAsync<RideTripDto>("api/taxi/rideinfo");
+            if (response != null)
+            {
+                return response;
+            }
+            return null;
         }
 
         // 🔹 Update Booking

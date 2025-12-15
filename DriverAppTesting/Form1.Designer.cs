@@ -44,6 +44,7 @@
             messagebox = new TextBox();
             OTPTextBox = new TextBox();
             GetToken = new Button();
+            button4 = new Button();
             SuspendLayout();
             // 
             // Online
@@ -198,11 +199,22 @@
             GetToken.UseVisualStyleBackColor = true;
             GetToken.Click += GetToken_Click_1;
             // 
+            // button4
+            // 
+            button4.Location = new Point(265, 97);
+            button4.Name = "button4";
+            button4.Size = new Size(136, 29);
+            button4.TabIndex = 15;
+            button4.Text = "GetTrip";
+            button4.UseVisualStyleBackColor = true;
+            button4.Click += button4_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(button4);
             Controls.Add(GetToken);
             Controls.Add(OTPTextBox);
             Controls.Add(messagebox);
@@ -243,5 +255,6 @@
         private TextBox messagebox;
         private TextBox OTPTextBox;
         private Button GetToken;
+        private Button button4;
     }
 }

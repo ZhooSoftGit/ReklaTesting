@@ -31,6 +31,16 @@ namespace DriverAppTesting
             if (authRequired && !string.IsNullOrEmpty(_token))
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
 
+
+            _httpClient.DefaultRequestHeaders.Add(
+                           "X-Client-App",
+                           "Driver"   // or UserApp / AdminWeb
+                       );
+
+            _httpClient.DefaultRequestHeaders.Add(
+                                        "X-Client-Key",
+                                        "9fA3dE7c2B6QmR8VwXK1ZJH0L5UYoT4n"
+            );
             var strContent = JsonSerializer.Serialize(data);
             var content = new StringContent(strContent, Encoding.UTF8, "application/json");
             string url = $"{_baseUrl}{endpoint}";
@@ -106,6 +116,19 @@ namespace DriverAppTesting
             try
             {
                 var response = await PostAsync<object>("api/taxi/accept-ride", rideRequest);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        public async Task<object?> DriverOnRideAsync(DriverStatusDto status)
+        {
+            try
+            {
+                var response = await PostAsync<object>("api/DriverStatus/update", status);
                 return response;
             }
             catch (Exception ex)

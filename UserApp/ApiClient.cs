@@ -27,7 +27,15 @@ namespace UserApp
         {
             if (authRequired && !string.IsNullOrEmpty(_token))
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+            _httpClient.DefaultRequestHeaders.Add(
+                            "X-Client-App",
+                            "User"   // or UserApp / AdminWeb
+                        );
 
+            _httpClient.DefaultRequestHeaders.Add(
+                                        "X-Client-Key",
+                                        "E4N7pZqL0HcYd5U1Bv2KX8mQF9J3R6A"
+            );
             var strContent = JsonSerializer.Serialize(data);
             var content = new StringContent(strContent, Encoding.UTF8, "application/json");
             string url = $"{_baseUrl}{endpoint}";

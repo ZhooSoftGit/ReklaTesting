@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using System.Data.Common;
+using System.Threading.Tasks;
 
 namespace UserApp
 {
@@ -35,8 +36,20 @@ namespace UserApp
                 txtLog.AppendText(text + Environment.NewLine);
         }
 
-        private void neardriver_Click(object sender, EventArgs e)
+        private async void neardriver_Click(object sender, EventArgs e)
         {
+            try
+            {
+                var result = await _connection.InvokeAsync<List<DriverLocation>>("GetNearbyDrivers", 11.079842, 77.001138);
+                string logValue = string.Join(", ",
+                            result.Select(d => $"DriverId:{d.DriverId}, VehicleType:{d.VehicleType}")
+                    );
+                AppendLog($" near by driver: {logValue}");
+            }
+            catch (Exception ex)
+            {
+                AppendLog($" Error: {ex.Message}");
+            }
         }
 
         private async void Initialize_Click(object sender, EventArgs e)

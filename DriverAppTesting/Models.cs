@@ -230,5 +230,20 @@
         #endregion
     }
 
+    public class DriverStatusDto
+    {
+        public DriverStatusEnum Status { get; set; }
+    }
+
+
+    public enum DriverStatusEnum
+    {
+        Offline = 0,  // Default, driver not available
+        Online = 1,   // Available to take rides
+        InRide = 2,   // Busy with an active ride
+        Break = 3     // Temporarily unavailable
+    }
+
+
 
 }

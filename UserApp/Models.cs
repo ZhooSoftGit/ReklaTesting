@@ -73,11 +73,28 @@ namespace UserApp
         Outstation = 3
     }
 
+    public enum DriverStatus
+    {
+        CheckIn = 1,
+        Idle = 2,
+        InRide = 3,
+        Break,
+        CheckOut,
+        LoggedOut
+    }
+
     public class DriverLocation
     {
-        public string DriverId { get; set; }
+        public int DriverId { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public DriverStatus Status { get; set; }
+
+        public int? VehicleId { get; set; }
+
+        public VehicleTypeEnum? VehicleType { get; set; }
+
+        public DateTime Timestamp { get; set; }
     }
 
     public enum RideStatus

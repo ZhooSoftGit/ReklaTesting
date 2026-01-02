@@ -28,13 +28,13 @@ namespace DriverAppTesting
         public Form1()
         {
             InitializeComponent();
-            //CurrentHubURL = azureurl;
+            CurrentHubURL = azureurl;
 
-            CurrentHubURL = localurl;
+            //CurrentHubURL = localurl;
 
             // Choose environment
-            string AzureMainURL = "https://localhost:7029/";
-            //string AzureMainURL = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
+            //string AzureMainURL = "https://localhost:7029/";
+            string AzureMainURL = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
 
             api = new ApiClient(AzureMainURL);
         }
@@ -52,7 +52,7 @@ namespace DriverAppTesting
             try
             {
                 txtLog.Clear();
-                await _connection.StartAsync();
+                await api.DriverOnRideAsync(new DriverStatusDto { Status = DriverStatusEnum.Online });
                 AppendLog("✅ Connected as Driver");
             }
             catch (Exception ex)
@@ -259,7 +259,7 @@ namespace DriverAppTesting
         {
             var data = await api.GetRideInfo();
 
-            if(data != null)
+            if (data != null)
             {
                 AppendLog($"Current Ride Id: {data.RideRequestId}, Status: {data.RideStatus}");
                 _currentBookingId = data.RideRequestId;

@@ -104,6 +104,20 @@ namespace DriverAppTesting
             }
         }
 
+        // 🔹 End Booking
+        public async Task<RideSummary?> EndRideStatusAsync(UpdateBookingRequest request)
+        {
+            try
+            {
+                var response = await PostAsync<ApiResponse<RideSummary>>("api/ride-trips/complete", request);
+                return response.Response;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
         // 🔹 Cancel Ride
         public async Task<RideServiceResponse> CancelRideAsync(int rideRequestId)
         {

@@ -12,20 +12,20 @@ namespace UserApp
 
         private int _userId = 14;
         private int _requestId = 1;
-        private string localurl = "https://localhost:7091/hubs/location";
-        private string azureurl = "https://zhoodrivetracker-erg5hca6dcdtfzcn.canadacentral-01.azurewebsites.net/hubs/location";
+        private string huburl = "https://localhost:7091/hubs/location";
+        //private string huburl = "https://zhoodrivetracker-erg5hca6dcdtfzcn.canadacentral-01.azurewebsites.net/hubs/location";
         private string CurrentHubURL;
         public Form1()
         {
             InitializeComponent();
 
-            CurrentHubURL = localurl;
+            CurrentHubURL = huburl;
 
             // Choose environment
-            string baseMAINUrl = "https://localhost:7029/";
-            //string AzureMainURL = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
+            string apiUrl = "https://localhost:7029/";
+            //string apiUrl = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
 
-            api = new ApiClient(baseMAINUrl);
+            api = new ApiClient(apiUrl);
         }
 
         private void AppendLog(string text)

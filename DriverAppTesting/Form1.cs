@@ -20,23 +20,23 @@ namespace DriverAppTesting
         private string _otp = "1234";
 
 
-        private string localurl = "https://localhost:7091/hubs/location";
-        private string azureurl = "https://zhoodrivetracker-erg5hca6dcdtfzcn.canadacentral-01.azurewebsites.net/hubs/location";
+        //private string huburl = "https://localhost:7091/hubs/location";
+        private string huburl = "https://zhoodrivetracker-erg5hca6dcdtfzcn.canadacentral-01.azurewebsites.net/hubs/location";
         private string CurrentHubURL;
 
         private ApiClient api;
         public Form1()
         {
             InitializeComponent();
-            CurrentHubURL = azureurl;
+            CurrentHubURL = huburl;
 
             //CurrentHubURL = localurl;
 
             // Choose environment
-            //string AzureMainURL = "https://localhost:7029/";
-            string AzureMainURL = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
+            //string apiUrl = "https://localhost:7029/";
+            string apiUrl = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
 
-            api = new ApiClient(AzureMainURL);
+            api = new ApiClient(apiUrl);
         }
 
         private void AppendLog(string text)
@@ -121,7 +121,7 @@ namespace DriverAppTesting
         {
             var otp = OTPTextBox.Text;  // reuse textbox for End OTP
 
-            await UpdateBoking(new UpdateBookingRequest
+            await EndBooking(new UpdateBookingRequest
             {
                 RideRequestId = _currentBookingId,
                 RideStatus = (int)RideStatus.Completed,
@@ -240,6 +240,14 @@ namespace DriverAppTesting
         private async Task UpdateBoking(UpdateBookingRequest req)
         {
             await api.UpdateRideStatusAsync(req);
+        }
+
+        private async Task EndBooking(UpdateBookingRequest req)
+        {
+           var tt = await api.EndRideStatusAsync(req);
+            if (tt != null) {
+                AppendLog($"Ride ended. Total paid: {tt.TotalPaid} {tt.Currency}, Driver: {tt.DriverName}");
+            }
         }
 
         private async void GetToken_Click_1(object sender, EventArgs e)

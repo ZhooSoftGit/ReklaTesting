@@ -245,5 +245,19 @@
     }
 
 
+    public class RideSummary
+    {
+        public double TotalPaid { get; set; }
+        public string Currency { get; set; } = "$";
+        public string DriverName { get; set; } = string.Empty;
+        public int DriverId { get; set; }
+
+        public int UserId { get; set; }
+        public int DurationInMinutes { get; set; }
+        public int RideRequestId { get; set; }
+        public bool PaymentConfirmed { get; set; }
+    }
+
+
 
 }

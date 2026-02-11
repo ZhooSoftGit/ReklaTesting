@@ -36,7 +36,7 @@
             EndTrip = new Button();
             cancelRekla = new Button();
             txtLog = new RichTextBox();
-            button1 = new Button();
+            StartLocation = new Button();
             button2 = new Button();
             Initialize = new Button();
             CancelRide = new Button();
@@ -45,6 +45,7 @@
             OTPTextBox = new TextBox();
             GetToken = new Button();
             button4 = new Button();
+            ResetLoc = new Button();
             SuspendLayout();
             // 
             // Online
@@ -125,15 +126,15 @@
             txtLog.TabIndex = 6;
             txtLog.Text = "";
             // 
-            // button1
+            // StartLocation
             // 
-            button1.Location = new Point(471, 363);
-            button1.Name = "button1";
-            button1.Size = new Size(140, 29);
-            button1.TabIndex = 7;
-            button1.Text = "startlocation";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            StartLocation.Location = new Point(471, 363);
+            StartLocation.Name = "StartLocation";
+            StartLocation.Size = new Size(140, 29);
+            StartLocation.TabIndex = 7;
+            StartLocation.Text = "startlocation";
+            StartLocation.UseVisualStyleBackColor = true;
+            StartLocation.Click += UpdateLocation;
             // 
             // button2
             // 
@@ -209,6 +210,16 @@
             button4.UseVisualStyleBackColor = true;
             button4.Click += button4_Click;
             // 
+            // ResetLoc
+            // 
+            ResetLoc.Location = new Point(438, 176);
+            ResetLoc.Name = "ResetLoc";
+            ResetLoc.Size = new Size(123, 29);
+            ResetLoc.TabIndex = 8;
+            ResetLoc.Text = "ResetLocation";
+            ResetLoc.UseVisualStyleBackColor = true;
+            ResetLoc.Click += reset_Location;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -221,8 +232,9 @@
             Controls.Add(button3);
             Controls.Add(CancelRide);
             Controls.Add(Initialize);
+            Controls.Add(ResetLoc);
             Controls.Add(button2);
-            Controls.Add(button1);
+            Controls.Add(StartLocation);
             Controls.Add(txtLog);
             Controls.Add(cancelRekla);
             Controls.Add(EndTrip);
@@ -247,7 +259,7 @@
         private Button EndTrip;
         private Button cancelRekla;
         private RichTextBox txtLog;
-        private Button button1;
+        private Button StartLocation;
         private Button button2;
         private Button Initialize;
         private Button CancelRide;
@@ -256,5 +268,6 @@
         private TextBox OTPTextBox;
         private Button GetToken;
         private Button button4;
+        private Button ResetLoc;
     }
 }

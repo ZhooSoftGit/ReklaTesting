@@ -2,9 +2,6 @@
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
-using System.Data.Common;
-using System.Security.Policy;
-using System.Threading.Tasks;
 
 namespace DriverAppTesting
 {
@@ -12,17 +9,20 @@ namespace DriverAppTesting
     {
         private HubConnection _connection;
         private int _driverId = 1;
-        private System.Timers.Timer _locationTimer;
         private int _currentBookingId = 3;
         private int _userId;
-
+        private RideRequestDto _currentBooking;
+        private Location _default = new Location { Latitude = 11.0797, Longitude = 76.9997 };
         private string _number = "8344273152";
         private string _otp = "1234";
-
+        private List<Location> _route = new List<Location>();
+        private Location _lastLocation;
 
         //private string huburl = "https://localhost:7091/hubs/location";
         private string huburl = "https://zhoodrivetracker-erg5hca6dcdtfzcn.canadacentral-01.azurewebsites.net/hubs/location";
         private string CurrentHubURL;
+
+        private MapHelper mapHelper;
 
         private ApiClient api;
         public Form1()
@@ -37,6 +37,9 @@ namespace DriverAppTesting
             string apiUrl = "https://zhoodrive-b8hwb4hxdsg7eeby.centralindia-01.azurewebsites.net/";
 
             api = new ApiClient(apiUrl);
+            mapHelper = new MapHelper();
+
+            _route = new List<Location> { { _default } };
         }
 
         private void AppendLog(string text)
@@ -52,6 +55,7 @@ namespace DriverAppTesting
             try
             {
                 txtLog.Clear();
+
                 await api.DriverOnRideAsync(new DriverStatusDto { Status = DriverStatusEnum.Online });
                 AppendLog("✅ Connected as Driver");
             }
@@ -90,6 +94,15 @@ namespace DriverAppTesting
 
             //await _connection.InvokeAsync("StartPickupNotification", _currentBookingId);
             AppendLog("📍 Started pickup");
+
+            var locations = await mapHelper.GetRoutePoints(_default.Latitude, _default.Longitude, _currentBooking.PickupLatitude.Value,
+                _currentBooking.PickupLongitude.Value);
+
+            _route = new List<Location>();
+
+            _routeIndex = 0;
+
+            _route = locations.Locations;
         }
 
         private async void ReachedPickup_Click(object sender, EventArgs e)
@@ -101,13 +114,19 @@ namespace DriverAppTesting
             });
             //await _connection.InvokeAsync("PickupReachedNotification", _currentBookingId);
             AppendLog("📍 Reached pickup");
+
+            _route = new List<Location> { new Location
+            {
+                Latitude = _currentBooking.PickupLatitude.Value,
+                Longitude = _currentBooking.PickupLongitude.Value
+            } };
         }
 
         private async void StartTrip_Click(object sender, EventArgs e)
         {
             var otp = OTPTextBox.Text;  // add a textbox for driver to enter OTP
 
-            await UpdateBoking(new UpdateBookingRequest
+            var result = await UpdateBoking(new UpdateBookingRequest
             {
                 RideRequestId = _currentBookingId,
                 RideStatus = (int)RideStatus.Started,
@@ -115,6 +134,16 @@ namespace DriverAppTesting
             });
             //await _connection.InvokeAsync("StartRide", _currentBookingId, otp);
             AppendLog($"🚖 Trip start attempted with OTP {otp}");
+
+            if (result != null)
+            {
+                var locations = await mapHelper.GetRoutePoints(_currentBooking.PickupLatitude.Value, _currentBooking.PickupLongitude.Value,
+                    _currentBooking.DropoffLatitude.Value, _currentBooking.DropoffLongitude.Value);
+
+                _routeIndex = 0;
+                _route = locations.Locations;
+
+            }
         }
 
         private async void EndTrip_Click(object sender, EventArgs e)
@@ -129,26 +158,11 @@ namespace DriverAppTesting
             });
             //await _connection.InvokeAsync("EndRide", _currentBookingId, otp);
             AppendLog($"🏁 Trip end attempted with OTP {otp}");
+
+            _route = new List<Location>();
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            _locationTimer = new System.Timers.Timer(2000);
-            _locationTimer.Elapsed += async (_, __) =>
-            {
-                var loc = new DriverLocation { DriverId = _driverId, Latitude = 11.0797, Longitude = 76.9997 };
-                if (_connection.State == HubConnectionState.Connected)
-                {
-                    await _connection.InvokeAsync("UpdateDriverLocation", loc);
-                }
-                else
-                {
-                    await _connection.StartAsync();
-                }
-            };
-            _locationTimer.Start();
-            AppendLog("📡 Location updates started");
-        }
+
 
         private void button2_Click(object sender, EventArgs e)
         {
@@ -195,6 +209,7 @@ namespace DriverAppTesting
             {
                 _currentBookingId = booking.RideRequestId;
                 _userId = booking.UserId;
+                _currentBooking = booking;
                 AppendLog($"📩 Booking received {booking.RideRequestId} from user {_userId}. Fare {booking.EstimatedFare}");
             });
 
@@ -237,15 +252,16 @@ namespace DriverAppTesting
         }
 
 
-        private async Task UpdateBoking(UpdateBookingRequest req)
+        private async Task<bool> UpdateBoking(UpdateBookingRequest req)
         {
-            await api.UpdateRideStatusAsync(req);
+            return await api.UpdateRideStatusAsync(req);
         }
 
         private async Task EndBooking(UpdateBookingRequest req)
         {
-           var tt = await api.EndRideStatusAsync(req);
-            if (tt != null) {
+            var tt = await api.EndRideStatusAsync(req);
+            if (tt != null)
+            {
                 AppendLog($"Ride ended. Total paid: {tt.TotalPaid} {tt.Currency}, Driver: {tt.DriverName}");
             }
         }
@@ -270,12 +286,49 @@ namespace DriverAppTesting
             if (data != null)
             {
                 AppendLog($"Current Ride Id: {data.RideRequestId}, Status: {data.RideStatus}");
+                _currentBooking = data;
                 _currentBookingId = data.RideRequestId;
             }
             else
             {
                 AppendLog("No ongoing ride found.");
             }
+        }
+
+
+        private System.Timers.Timer _locationTimer;
+        private int _routeIndex = 0;
+
+        private void UpdateLocation(object sender, EventArgs e)
+        {
+            _locationTimer = new System.Timers.Timer(2000);
+
+            _locationTimer.Elapsed += async (_, __) =>
+            {
+                if (_route.Count > _routeIndex)
+                {
+                    var point = _route[_routeIndex++];
+                    var loc = new DriverLocation
+                    {
+                        DriverId = _driverId,
+                        Latitude = point.Latitude,
+                        Longitude = point.Longitude
+                    };
+
+                    if (_connection.State != HubConnectionState.Connected)
+                        await _connection.StartAsync();
+
+                    await _connection.InvokeAsync("UpdateDriverLocation", loc);
+                }
+            };
+
+            _locationTimer.Start();
+            AppendLog("📡 Route simulation started");
+        }
+
+        private void reset_Location(object sender, EventArgs e)
+        {
+            _route = new List<Location> { { _default } };
         }
     }
 }

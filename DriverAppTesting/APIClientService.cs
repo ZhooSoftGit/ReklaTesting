@@ -55,14 +55,21 @@ namespace DriverAppTesting
         // 🔹 Common GET
         private async Task<T> GetAsync<T>(string endpoint, bool authRequired = true)
         {
-            if (authRequired && !string.IsNullOrEmpty(_token))
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+            try
+            {
+                if (authRequired && !string.IsNullOrEmpty(_token))
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}{endpoint}");
-            response.EnsureSuccessStatusCode();
+                var response = await _httpClient.GetAsync($"{_baseUrl}{endpoint}");
+                response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch (Exception ex)
+            {
+                return default(T);
+            }
         }
 
         // 🔹 Verify OTP

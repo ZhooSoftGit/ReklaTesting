@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic.Logging;
 
 namespace DriverAppTesting
 {
@@ -86,6 +87,7 @@ namespace DriverAppTesting
 
         private async void StartPickup_Click(object sender, EventArgs e)
         {
+            _istarted = true;
             await UpdateBoking(new UpdateBookingRequest
             {
                 RideRequestId = _currentBookingId,
@@ -148,6 +150,7 @@ namespace DriverAppTesting
 
         private async void EndTrip_Click(object sender, EventArgs e)
         {
+            _istarted = false;
             var otp = OTPTextBox.Text;  // reuse textbox for End OTP
 
             await EndBooking(new UpdateBookingRequest
@@ -228,6 +231,7 @@ namespace DriverAppTesting
 
         private async void CancelRide_Click(object sender, EventArgs e)
         {
+            _istarted = false;
             var result = await api.CancelRideAsync(_currentBookingId);
             AppendLog($"Ride has been cancelled. {result.Success}");
 
@@ -298,6 +302,7 @@ namespace DriverAppTesting
 
         private System.Timers.Timer _locationTimer;
         private int _routeIndex = 0;
+        private bool _istarted;
 
         private void UpdateLocation(object sender, EventArgs e)
         {
@@ -305,21 +310,30 @@ namespace DriverAppTesting
 
             _locationTimer.Elapsed += async (_, __) =>
             {
-                if (_route.Count > _routeIndex)
+                if (_istarted)
                 {
-                    var point = _route[_routeIndex++];
-                    var loc = new DriverLocation
+                    if (_route.Count > _routeIndex)
                     {
-                        DriverId = _driverId,
-                        Latitude = point.Latitude,
-                        Longitude = point.Longitude
-                    };
+                        var point = _route[_routeIndex++];
+                        var loc = new DriverLocation
+                        {
+                            DriverId = _driverId,
+                            Latitude = point.Latitude,
+                            Longitude = point.Longitude
+                        };
 
-                    if (_connection.State != HubConnectionState.Connected)
-                        await _connection.StartAsync();
+                        if (_connection.State != HubConnectionState.Connected)
+                            await _connection.StartAsync();
 
-                    await _connection.InvokeAsync("UpdateDriverLocation", loc);
+                        await _connection.InvokeAsync("UpdateDriverLocation", loc);
+                    }
+                    
                 }
+                else
+                {
+                    await _connection.InvokeAsync("UpdateDriverLocation", _default);
+                }
+
             };
 
             _locationTimer.Start();
